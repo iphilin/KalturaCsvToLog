@@ -75,7 +75,12 @@ namespace KalturaCsvToLog
                     continue;
                 }
 
-                yield return values[columnIndex].Trim('"', '\'', '.', ';').Replace("\\\"", "");
+                yield return 
+                    values[columnIndex]
+                        .Trim('"', '\'', '.', ';')
+                        .Replace("\\\"", "")
+                        .Replace("&gt;", ">")
+                        .Replace("&lt;", "<");
             }
         }
     }
