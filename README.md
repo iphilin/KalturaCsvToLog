@@ -9,4 +9,4 @@ Put KalturaCsvToLog.exe in folder with CSV files (imported logs from kibana) and
 Default arguments:
 
 - Column name - `message`
-- CSV Separator - `",` (kibana wraps messages in `"`)
+- CSV Separator - `,`
