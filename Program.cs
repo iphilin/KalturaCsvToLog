@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Encodings.Web;
+using System.Web;
 
 namespace KalturaCsvToLog
 {
@@ -73,7 +75,7 @@ namespace KalturaCsvToLog
                     continue;
                 }
 
-                yield return values[columnIndex].Trim('"', '\'', '.', ';');
+                yield return values[columnIndex].Trim('"', '\'', '.', ';').Replace("\\\"", "");
             }
         }
     }
