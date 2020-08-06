@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Encodings.Web;
@@ -27,9 +28,9 @@ namespace KalturaCsvToLog
 
             foreach (var path in paths)
                 ConvertCsvToLog(
-                    path, 
-                    Path.ChangeExtension(path, "log"), 
-                    column, 
+                    path,
+                    Path.ChangeExtension(path, "log"),
+                    column,
                     separator);
 
             Console.WriteLine("All logs have been converted from CSV into log format");
@@ -44,7 +45,10 @@ namespace KalturaCsvToLog
             using var log = new StreamWriter(logPath);
 
             foreach (var line in GetMessages(lines, column, separator))
-                log.WriteLine(line);
+            {
+                if (!string.IsNullOrEmpty(line))
+                    log.WriteLine(line);
+            }
 
             Console.WriteLine($"Created {logPath}");
         }
@@ -64,6 +68,12 @@ namespace KalturaCsvToLog
                     header.ToUpperInvariant().Split(separator),
                     column.ToUpperInvariant());
 
+            // if coulumn index was not found, search it again with quotation wrapper  
+            if (columnIndex < 0)
+                columnIndex = Array.IndexOf(
+                    header.ToUpperInvariant().Split("\"" + separator + "\""),
+                    column.ToUpperInvariant());
+
             foreach (var line in lines.Skip(1))
             {
                 // TODO: rework that! Kibana wraps messages into \" and escape any \" inside messages. We are looking for string messages on position 2 and it works. For other situation it won't.
@@ -75,13 +85,17 @@ namespace KalturaCsvToLog
                     continue;
                 }
 
-                yield return 
-                    values[columnIndex]
-                        .Trim('"', '\'', '.', ';')
-                        .Replace("\\\"", "")
-                        .Replace("&gt;", ">")
-                        .Replace("&lt;", "<");
+                var logLine = values[columnIndex].Replace("\"", "");
+                if (logLine.StartsWith("DEBUG", true, CultureInfo.InvariantCulture) ||
+                    logLine.StartsWith("INFO", true, CultureInfo.InvariantCulture) ||
+                    logLine.StartsWith("WARN", true, CultureInfo.InvariantCulture) ||
+                    logLine.StartsWith("ERROR", true, CultureInfo.InvariantCulture) ||
+                    logLine.StartsWith("FATAL", true, CultureInfo.InvariantCulture))
+                    yield return logLine;
+                else
+                    yield return string.Empty;
             }
         }
     }
 }
+
