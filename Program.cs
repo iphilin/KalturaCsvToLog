@@ -59,17 +59,16 @@ namespace KalturaCsvToLog
                 yield break;
             }
 
-            var columnIndex =
-                Array.IndexOf(
-                    header.ToUpperInvariant().Split(separator),
-                    column.ToUpperInvariant());
+            var columnNames = header.ToUpperInvariant().Split(separator);
+            var columnToSearch = column.ToUpperInvariant();
+            var columnIndex = Array.FindIndex(columnNames, x => x.Contains(columnToSearch));
 
             foreach (var line in lines.Skip(1))
             {
                 // TODO: rework that! Kibana wraps messages into \" and escape any \" inside messages. We are looking for string messages on position 2 and it works. For other situation it won't.
                 var values = line.Split($"\"\"\"{separator}");
 
-                if (values.Length <= columnIndex)
+                if (values.Length <= columnIndex | columnIndex < 0)
                 {
                     Console.WriteLine($"ERROR: Cannot find value by index:{columnIndex} for column:{column}\tERROR: line:{line}");
                     continue;
