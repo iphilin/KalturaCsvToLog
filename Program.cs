@@ -47,7 +47,7 @@ namespace KalturaCsvToLog
             
             var orderedMessages =
                 GetIndexedMessages(lines, column, separator)
-                    .OrderByDescending(x => x.Index)
+                    .OrderBy(x => x.Index)
                     .Select(x => x.Message);
             
             foreach (var line in orderedMessages)
