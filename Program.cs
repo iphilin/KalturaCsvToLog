@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Encodings.Web;
+using System.Text.RegularExpressions;
 using System.Web;
 
 namespace KalturaCsvToLog
@@ -42,15 +44,21 @@ namespace KalturaCsvToLog
             var lines = File.ReadAllLines(csvPath);
 
             using var log = new StreamWriter(logPath);
-
-            foreach (var line in GetMessages(lines, column, separator))
+            
+            var orderedMessages =
+                GetIndexedMessages(lines, column, separator)
+                    .OrderByDescending(x => x.Index)
+                    .Select(x => x.Message);
+            
+            foreach (var line in orderedMessages)
                 log.WriteLine(line);
 
             Console.WriteLine($"Created {logPath}");
         }
 
-        private static IEnumerable<string> GetMessages(string[] lines, string column, string separator)
+        private static IEnumerable<(DateTime Index, string Message)> GetIndexedMessages(string[] lines, string column, string separator)
         {
+            var timeRegEx = new Regex(@"\d{4}-[01]\d-[0-3]\d \d{2}:\d{2}:\d{2},\d{3}");
             var header = lines.FirstOrDefault();
 
             if (header is null)
@@ -74,12 +82,15 @@ namespace KalturaCsvToLog
                     continue;
                 }
 
-                yield return 
-                    values[columnIndex]
-                        .Trim('"', '\'', '.', ';')
-                        .Replace("\\\"", "")
-                        .Replace("&gt;", ">")
-                        .Replace("&lt;", "<");
+                var msg = values[columnIndex]
+                    .Trim('"', '\'', '.', ';')
+                    .Replace("\\\"", "")
+                    .Replace("&gt;", ">")
+                    .Replace("&lt;", "<");
+                var dateStr = timeRegEx.Match(msg).Value;
+                var index = DateTime.ParseExact(dateStr, "yyyy-MM-dd HH:mm:ss,fff", CultureInfo.InvariantCulture);
+
+                yield return (index, msg);
             }
         }
     }
