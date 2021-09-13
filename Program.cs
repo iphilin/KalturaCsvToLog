@@ -88,9 +88,12 @@ namespace KalturaCsvToLog
                     .Replace("&gt;", ">")
                     .Replace("&lt;", "<");
                 var dateStr = timeRegEx.Match(msg).Value;
-                var index = DateTime.ParseExact(dateStr, "yyyy-MM-dd HH:mm:ss,fff", CultureInfo.InvariantCulture);
+                var wasParsed = DateTime.TryParseExact(dateStr, "yyyy-MM-dd HH:mm:ss,fff", CultureInfo.InvariantCulture, DateTimeStyles.None, out var index);
 
-                yield return (index, msg);
+                if (wasParsed)
+                    yield return (index, msg);
+                else
+                    yield return (DateTime.Now, msg);
             }
         }
     }
